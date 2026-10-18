@@ -397,6 +397,11 @@ void shutdown_executor(void) /* {{{ */
 		}
 	} zend_end_try();
 
+	/* may be used by zend_error_zstr_at before init_executor */
+	EG(objects_store).top = 1;
+	EG(error_handling) = EH_NORMAL;
+	EG(exception) = NULL;
+
 	zend_shutdown_fpu();
 
 #if ZEND_DEBUG
