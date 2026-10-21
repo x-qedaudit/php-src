@@ -1096,7 +1096,7 @@ ZEND_API int _array_init(zval *arg, uint32_t size ZEND_FILE_LINE_DC) /* {{{ */
 ZEND_API int _array_init_singleton(zval *arg ZEND_FILE_LINE_DC) /* {{{ */
 {
 	_array_init(arg, 0 ZEND_FILE_LINE_RELAY_CC);
-	Z_ARRVAL_P(arg)->nTableSize = 1;
+	Z_ARRVAL_P(arg)->nTableSize = 2;
 	return SUCCESS;
 }
 /* }}} */
