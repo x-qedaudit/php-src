@@ -966,6 +966,23 @@ ZEND_API int _array_init(zval *arg, uint size ZEND_FILE_LINE_DC) /* {{{ */
 }
 /* }}} */
 
+ZEND_API int _array_init_singleton(zval *arg ZEND_FILE_LINE_DC) /* {{{ */
+{
+	HashTable *ht;
+
+	_array_init(arg, 0 ZEND_FILE_LINE_RELAY_CC);
+	ht = Z_ARRVAL_P(arg);
+
+	/* 5.3 allocates the bucket array in zend_hash_init() with at least 8
+	 * slots. Shrink it, keeping nTableMask == nTableSize - 1. */
+	efree_rel(ht->arBuckets);
+	ht->arBuckets = (Bucket **) ecalloc_rel(2, sizeof(Bucket *));
+	ht->nTableSize = 2;
+	ht->nTableMask = 1;
+	return SUCCESS;
+}
+/* }}} */
+
 static int zend_merge_property(zval **value TSRMLS_DC, int num_args, va_list args, const zend_hash_key *hash_key) /* {{{ */
 {
 	/* which name should a numeric property have ? */
