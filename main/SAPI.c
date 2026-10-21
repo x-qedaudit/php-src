@@ -553,6 +553,7 @@ SAPI_API void sapi_deactivate(TSRMLS_D)
 	SG(callback_run) = 0;
 	if (SG(callback_func)) {
 		zval_ptr_dtor(&SG(callback_func));
+		SG(callback_func) = NULL;
 	}
 	SG(request_info).headers_read = 0;
 	SG(global_request_time) = 0;
