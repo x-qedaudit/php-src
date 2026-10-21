@@ -1251,12 +1251,13 @@ ZEND_API int shift_right_function(zval *result, zval *op1, zval *op2 TSRMLS_DC) 
 /* must support result==op1 */
 ZEND_API int add_char_to_string(zval *result, const zval *op1, const zval *op2) /* {{{ */
 {
-	int length = Z_STRLEN_P(op1) + 1;
+	int length;
 	char *buf;
 
-	if (UNEXPECTED(length < 0)) {
-		zend_error(E_ERROR, "String size overflow");
+	if (UNEXPECTED(Z_STRLEN_P(op1) >= INT_MAX - 1)) {
+		zend_mm_safe_error_ex("String size overflow");
 	}
+	length = Z_STRLEN_P(op1) + 1;
 
 	if (IS_INTERNED(Z_STRVAL_P(op1))) {
 		buf = (char *) emalloc(length + 1);
@@ -1274,12 +1275,14 @@ ZEND_API int add_char_to_string(zval *result, const zval *op1, const zval *op2) 
 /* must support result==op1 */
 ZEND_API int add_string_to_string(zval *result, const zval *op1, const zval *op2) /* {{{ */
 {
-	int length = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
+	int length;
 	char *buf;
 
-	if (UNEXPECTED(length < 0)) {
-		zend_error(E_ERROR, "String size overflow");
+	if (UNEXPECTED(Z_STRLEN_P(op2) > INT_MAX - 1 - Z_STRLEN_P(op1))) {
+		zend_mm_safe_error_ex("String size overflow");
 	}
+	length = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
+
 	if (IS_INTERNED(Z_STRVAL_P(op1))) {
 		buf = (char *) emalloc(length+1);
 		memcpy(buf, Z_STRVAL_P(op1), Z_STRLEN_P(op1));
@@ -1318,13 +1321,12 @@ ZEND_API int concat_function(zval *result, zval *op1, zval *op2 TSRMLS_DC) /* {{
 		op2 = &op2_copy;
 	}
 	if (result==op1 && !IS_INTERNED(Z_STRVAL_P(op1))) {	/* special case, perform operations on result */
-		uint res_len = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
+		uint res_len;
 
-		if (Z_STRLEN_P(result) < 0 || (int) (Z_STRLEN_P(op1) + Z_STRLEN_P(op2)) < 0) {
-			efree(Z_STRVAL_P(result));
-			ZVAL_EMPTY_STRING(result);
-			zend_error(E_ERROR, "String size overflow");
+		if (UNEXPECTED(Z_STRLEN_P(op1) < 0 || Z_STRLEN_P(op2) < 0 || Z_STRLEN_P(op2) > INT_MAX - Z_STRLEN_P(op1))) {
+			zend_mm_safe_error_ex("String size overflow");
 		}
+		res_len = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
 
 		Z_STRVAL_P(result) = safe_erealloc(Z_STRVAL_P(result), res_len, 1, 1);
 
@@ -1332,12 +1334,13 @@ ZEND_API int concat_function(zval *result, zval *op1, zval *op2 TSRMLS_DC) /* {{
 		Z_STRVAL_P(result)[res_len]=0;
 		Z_STRLEN_P(result) = res_len;
 	} else {
-		int length = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
+		int length;
 		char *buf;
 
-		if (Z_STRLEN_P(op1) < 0 || Z_STRLEN_P(op2) < 0 || (int) (Z_STRLEN_P(op1) + Z_STRLEN_P(op2)) < 0) {
-			zend_error(E_ERROR, "String size overflow");
+		if (UNEXPECTED(Z_STRLEN_P(op1) < 0 || Z_STRLEN_P(op2) < 0 || Z_STRLEN_P(op2) > INT_MAX - Z_STRLEN_P(op1))) {
+			zend_mm_safe_error_ex("String size overflow");
 		}
+		length = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);
 		buf = (char *) safe_emalloc(length, 1, 1);
 
 		memcpy(buf, Z_STRVAL_P(op1), Z_STRLEN_P(op1));
